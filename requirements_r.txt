@@ -1,0 +1,34 @@
+# =============================================================================
+# Marketing Mix Modelling — R Requirements (Robyn Notebook)
+# R 4.3+
+# =============================================================================
+#
+# Run the following in an R console to install all dependencies for
+# notebooks/05_robyn_mmm_r.ipynb (R kernel via IRkernel).
+#
+# --- Robyn & dependencies ---
+# install.packages("Robyn")
+# install.packages("reticulate")   # R-Python interoperability
+# install.packages("IRkernel")     # Jupyter R kernel
+# IRkernel::installspec()          # Register kernel with Jupyter
+#
+# --- Core R packages used in the Robyn notebook ---
+# install.packages(c(
+#   "dplyr",
+#   "tidyr",
+#   "ggplot2",
+#   "data.table",
+#   "lubridate",
+#   "scales",
+#   "jsonlite"
+# ))
+#
+# --- Nevergrad (Python, called via reticulate) ---
+# Robyn delegates its evolutionary optimisation to Python/Nevergrad.
+# Ensure the Python env has nevergrad installed:
+#   pip install nevergrad
+#
+# --- Notes ---
+# - Robyn requires Python 3.10+ accessible via reticulate
+# - Set RETICULATE_PYTHON in .Rprofile if needed
+# - Run `reticulate::py_config()` to verify Python environment

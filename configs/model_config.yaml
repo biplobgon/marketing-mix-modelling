@@ -1,0 +1,135 @@
+# =============================================================================
+# Marketing Mix Modelling — Model & Pipeline Configuration
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Data
+# ---------------------------------------------------------------------------
+data:
+  raw_path: data/raw/mmm_weekly_india.csv
+  baseline_path: data/raw/advertising.csv
+  processed_path: data/processed/mmm_features.csv
+  date_column: date
+  kpi_column: sales
+  geo_column: geo
+  brand_column: brand
+
+# ---------------------------------------------------------------------------
+# Geography & Channels
+# ---------------------------------------------------------------------------
+geographies:
+  - NORTH
+  - SOUTH
+  - EAST
+  - WEST
+  - CENTRAL
+  - NORTHEAST
+  - METRO_DELHI
+  - METRO_MUMBAI
+
+media_channels:
+  - tv_spend
+  - youtube_spend
+  - facebook_spend
+  - instagram_spend
+  - print_spend
+  - radio_spend
+
+control_variables:
+  - cpi
+  - gdp_growth_index
+  - festival_index
+  - rainfall_index
+  - weighted_distribution
+  - numeric_distribution
+  - tdp
+  - nos
+
+promo_variables:
+  - feature_flag
+  - display_flag
+  - tpr_flag
+  - trade_spend
+
+creative_signals:
+  - fb_banner_content_score
+  - ig_banner_content_score
+
+# ---------------------------------------------------------------------------
+# Adstock Parameters (initial / grid search values)
+# ---------------------------------------------------------------------------
+adstock:
+  type: geometric          # geometric | weibull
+  decay_rates:
+    tv_spend: 0.7          # ~8-10 week carryover
+    youtube_spend: 0.4
+    facebook_spend: 0.35   # ~2-3 week carryover
+    instagram_spend: 0.3
+    print_spend: 0.5
+    radio_spend: 0.45
+  # Weibull parameters (if adstock.type = weibull)
+  weibull:
+    shape: 2.0
+    scale: 1.0
+
+# ---------------------------------------------------------------------------
+# Saturation Parameters
+# ---------------------------------------------------------------------------
+saturation:
+  type: hill               # hill | logistic | neg_exp
+  hill:
+    K: 0.5                 # Half-saturation point (normalised spend)
+    beta: 2.0              # Shape parameter
+  logistic:
+    lambda_: 1.0
+    mu: 0.5
+  neg_exp:
+    a: 1.0
+
+# ---------------------------------------------------------------------------
+# Classical MMM (constrained Ridge)
+# ---------------------------------------------------------------------------
+classical_mmm:
+  alpha: 0.1               # Ridge regularisation strength
+  max_iter: 10000
+  non_negativity: true     # Constrain media coefficients >= 0
+
+# ---------------------------------------------------------------------------
+# Bayesian MMM (PyMC-Marketing)
+# ---------------------------------------------------------------------------
+bayesian_mmm:
+  draws: 1000
+  tune: 500
+  chains: 4
+  target_accept: 0.9
+  random_seed: 42
+
+# ---------------------------------------------------------------------------
+# Google Meridian
+# ---------------------------------------------------------------------------
+meridian:
+  n_chains: 4
+  n_samples: 1000
+  n_warmup: 500
+  geo_level: true
+
+# ---------------------------------------------------------------------------
+# Budget Optimisation
+# ---------------------------------------------------------------------------
+optimisation:
+  method: SLSQP            # scipy.optimize.minimize method
+  total_budget: 1000000    # Default total budget (currency units)
+  scenarios:
+    flat: 1.0              # Same budget
+    increase_10: 1.1       # +10%
+    increase_25: 1.25      # +25%
+  seed: 42
+
+# ---------------------------------------------------------------------------
+# Outputs
+# ---------------------------------------------------------------------------
+outputs:
+  figures_dir: outputs/figures
+  models_dir: outputs/models
+  reports_dir: outputs/reports
+  pptx_filename: MMM_Stakeholder_Deck.pptx
