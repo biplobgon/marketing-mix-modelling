@@ -1,0 +1,1 @@
+End-to-end Marketing Mix Modelling system covering Traditional Constrained Regression, Meta Robyn, Google Meridian & Bayesian PyMC-Marketing — with ROAS attribution, budget optimisation, Streamlit dashboard, and a BCG-style stakeholder deck.
