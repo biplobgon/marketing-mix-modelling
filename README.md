@@ -1,6 +1,6 @@
 # 📊 Marketing Mix Modelling (MMM)
 
-> **End-to-end Marketing Mix Modelling system** covering Traditional Constrained Regression, Meta Robyn, Google Meridian & Bayesian PyMC-Marketing — with ROAS attribution, budget optimisation, Streamlit dashboard, and a BCG-style stakeholder deck.
+> **End-to-end Marketing Mix Modelling system** covering Traditional Constrained Regression, Meta Robyn, Google Meridian & Bayesian PyMC-Marketing — with ROAS attribution, budget optimisation, Streamlit dashboard, and a stakeholder deck.
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![R](https://img.shields.io/badge/R-4.3%2B-276DC3?style=flat-square&logo=r&logoColor=white)](https://www.r-project.org/)
@@ -22,7 +22,7 @@
 7. [Project Architecture](#-project-architecture)
 8. [Notebooks Walkthrough](#-notebooks-walkthrough)
 9. [Streamlit Dashboard](#-streamlit-dashboard)
-10. [BCG-Style Stakeholder Deck](#-bcg-style-stakeholder-deck)
+10. [Stakeholder Deck](#-stakeholder-deck)
 11. [Key Results & Findings](#-key-results--findings)
 12. [Tech Stack](#-tech-stack)
 13. [How to Reproduce](#-how-to-reproduce)
@@ -210,6 +210,15 @@ MMM practitioners face a fundamental identification problem: media channels are 
 
 *Note: Behaviourally realistic synthetic data designed to mirror Indian FMCG category dynamics — not proprietary commercial data.*
 
+### Secondary Dataset — Synthetic MMM Weekly India (Saturation Variant)
+
+| Property | Detail |
+|----------|--------|
+| **File** | `synthetic_mmm_weekly_india_SAT.csv` |
+| **Rows** | 11,232 (156 weeks × 8 geographies × 3 brands × 3 SKUs) |
+| **Columns** | 28 |
+| **Purpose** | Saturation-pre-transformed variant of the primary dataset — used to validate adstock/saturation transform pipelines and benchmark models against pre-processed inputs |
+
 ### Baseline Dataset — Classic Advertising (TV / Radio / Newspaper → Sales)
 
 | Property | Detail |
@@ -234,7 +243,8 @@ marketing-mix-modelling/
 │
 ├── data/
 │   ├── raw/                           ← Gitignored; use download script
-│   │   ├── mmm_weekly_india.csv
+│   │   ├── synthetic_mmm_weekly_india.csv
+│   │   ├── synthetic_mmm_weekly_india_SAT.csv
 │   │   └── advertising.csv
 │   └── processed/                     ← Feature-engineered datasets
 │
@@ -270,7 +280,7 @@ marketing-mix-modelling/
 │   │   │   └── 6_framework_comparison.py
 │   │   └── components.py
 │   └── reports/
-│       └── generate_pptx.py          ← Auto-generate BCG-style deck
+│       └── generate_pptx.py          ← Auto-generate stakeholder deck
 │
 ├── outputs/
 │   ├── figures/
@@ -322,7 +332,7 @@ streamlit run app.py
 
 ---
 
-## 📑 BCG-Style Stakeholder Deck
+## 📑 Stakeholder Deck
 
 A professionally generated PowerPoint deck suitable for C-suite and board-level stakeholder presentations.
 

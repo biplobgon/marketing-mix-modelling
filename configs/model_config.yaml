@@ -6,7 +6,8 @@
 # Data
 # ---------------------------------------------------------------------------
 data:
-  raw_path: data/raw/mmm_weekly_india.csv
+  raw_path: data/raw/synthetic_mmm_weekly_india.csv
+  sat_path: data/raw/synthetic_mmm_weekly_india_SAT.csv
   baseline_path: data/raw/advertising.csv
   processed_path: data/processed/mmm_features.csv
   date_column: date

@@ -75,6 +75,24 @@ def load_baseline_data(config: dict[str, Any]) -> pd.DataFrame:
     raise NotImplementedError("load_baseline_data is not yet implemented.")
 
 
+def load_sat_data(config: dict[str, Any]) -> pd.DataFrame:
+    """Load the saturation-transformed variant of the synthetic India MMM dataset.
+
+    Args:
+        config: Configuration dictionary (see configs/model_config.yaml).
+
+    Returns:
+        DataFrame with 11,232-row saturation-pre-transformed dataset.
+
+    TODO:
+        - Read `config["data"]["sat_path"]`
+        - Parse date column to datetime
+        - Log shape and dtypes
+    """
+    # TODO: implement SAT data loading
+    raise NotImplementedError("load_sat_data is not yet implemented.")
+
+
 # ---------------------------------------------------------------------------
 # 2. Preprocessing
 # ---------------------------------------------------------------------------
