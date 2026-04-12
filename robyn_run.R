@@ -1,8 +1,14 @@
 # =============================================================================
-# Robyn MMM — Indian FMCG National Weekly
+# Robyn MMM - Indian FMCG National Weekly
 # =============================================================================
 
-.libPaths(c("C:/Rlibs", .libPaths()))
+lib_path <- "C:/Rlibs"
+if (!dir.exists(lib_path)) dir.create(lib_path, recursive = TRUE, showWarnings = FALSE)
+tmp_dir <- "C:/Rtemp"
+if (!dir.exists(tmp_dir)) dir.create(tmp_dir, recursive = TRUE, showWarnings = FALSE)
+Sys.setenv(TMP = tmp_dir, TEMP = tmp_dir)
+
+.libPaths(c(lib_path, .libPaths()))
 suppressPackageStartupMessages({
   library(Robyn)
   library(reticulate)
@@ -21,10 +27,8 @@ reticulate::use_python(python_exe, required = FALSE)
 
 dt <- fread("data/processed/mmm_national_weekly.csv")
 dt[, date := as.Date(date)]
-cat("Rows:", nrow(dt), "| Cols:", ncol(dt), "
-")
-cat("Date range:", format(min(dt$date)), "to", format(max(dt$date)), "
-")
+cat("Rows:", nrow(dt), "| Cols:", ncol(dt), "\n")
+cat("Date range:", format(min(dt$date)), "to", format(max(dt$date)), "\n")
 
 data("dt_prophet_holidays", package = "Robyn")
 
@@ -73,18 +77,15 @@ InputCollect <- robyn_inputs(
   hyperparameters = hyperparameters
 )
 
-cat("
-=== Running Nevergrad (iterations=200, trials=1, cores=4) ===
-")
+cat("\n=== Running Nevergrad (iterations=200, trials=1, cores=2) ===\n")
 OutputModels <- robyn_run(
   InputCollect = InputCollect,
-  cores        = 4,
+  cores        = 2,
   iterations   = 200,
   trials       = 1,
   outputs      = FALSE
 )
-cat("=== Optimisation complete ===
-")
+cat("=== Optimisation complete ===\n")
 
 plot_dir <- "outputs/figures/robyn"
 dir.create(plot_dir, showWarnings = FALSE, recursive = TRUE)
@@ -97,18 +98,66 @@ OutputCollect <- robyn_outputs(
   csv_out       = "all"
 )
 
-pareto_df <- OutputCollect$allPareto
-best_model <- pareto_df$solID[which.min(pareto_df$decomp.rssd)]
-
-tryCatch({
-  robyn_onepagers(
-    InputCollect  = InputCollect,
-    OutputCollect = OutputCollect,
-    select_model  = best_model,
-    plot_folder   = plot_dir
+extract_pareto_df <- function(output_collect) {
+  candidates <- list(
+    output_collect$allPareto,
+    output_collect$resultHypParam,
+    output_collect$allPareto$resultHypParam
   )
-}, error = function(e) cat("One-pager warning:", e$message, "
-"))
+  for (cand in candidates) {
+    if (is.data.frame(cand)) return(as.data.frame(cand))
+  }
+  stop("Unable to locate Pareto table. OutputCollect names: ",
+       paste(names(output_collect), collapse = ", "),
+       " | allPareto names: ",
+       paste(names(output_collect$allPareto), collapse = ", "))
+}
+
+pareto_df <- extract_pareto_df(OutputCollect)
+
+model_id_col <- if ("solID" %in% names(pareto_df)) {
+  "solID"
+} else if ("sol_id" %in% names(pareto_df)) {
+  "sol_id"
+} else if ("sol.id" %in% names(pareto_df)) {
+  "sol.id"
+} else {
+  NA_character_
+}
+
+best_model <- NA_character_
+if ("selectID" %in% names(OutputCollect) && length(OutputCollect$selectID) > 0) {
+  best_model <- as.character(OutputCollect$selectID[[1]])
+}
+
+if (is.na(best_model) || !nzchar(best_model)) {
+  if (is.na(model_id_col)) {
+    stop("No model ID column found in Pareto table. Available columns: ",
+         paste(names(pareto_df), collapse = ", "))
+  }
+  best_model <- as.character(pareto_df[[model_id_col]][which.min(pareto_df$decomp.rssd)][1])
+}
+
+if (is.na(best_model) || !nzchar(best_model)) {
+  if (is.na(model_id_col)) {
+    stop("Unable to resolve selected model ID.")
+  }
+  best_model <- as.character(pareto_df[[model_id_col]][1])
+  cat("Fallback: using first Pareto model as selected model ->", best_model, "\n")
+}
+
+if (FALSE) {
+  tryCatch({
+    robyn_onepagers(
+      InputCollect  = InputCollect,
+      OutputCollect = OutputCollect,
+      select_model  = best_model,
+      plot_folder   = plot_dir
+    )
+  }, error = function(e) cat("One-pager warning:", e$message, "\n"))
+} else {
+  cat("Skipping robyn_onepagers() for notebook stability on Windows.\n")
+}
 
 AllocatorCollect <- tryCatch(
   robyn_allocator(
@@ -121,8 +170,7 @@ AllocatorCollect <- tryCatch(
     channel_constr_up  = 0.9,
     plot_folder        = plot_dir
   ),
-  error = function(e) { cat("Allocator warning:", e$message, "
-"); NULL }
+  error = function(e) { cat("Allocator warning:", e$message, "\n"); NULL }
 )
 
 alloc_csv_path <- "outputs/models/robyn_allocation.csv"
@@ -130,11 +178,16 @@ if (!is.null(AllocatorCollect)) {
   tryCatch({
     alloc_dt <- AllocatorCollect$dt_optimOut
     fwrite(alloc_dt, alloc_csv_path)
-  }, error = function(e) cat("Alloc table warning:", e$message, "
-"))
+  }, error = function(e) cat("Alloc table warning:", e$message, "\n"))
 }
 
-roas_dt <- OutputCollect$xDecompAgg[solID == best_model]
+xdecomp <- OutputCollect$xDecompAgg
+if (!is.na(model_id_col) && model_id_col %in% names(xdecomp)) {
+  roas_dt <- xdecomp[xdecomp[[model_id_col]] == best_model, , drop = FALSE]
+} else {
+  cat("xDecompAgg has no matching model ID column; exporting full decomposition table.\n")
+  roas_dt <- xdecomp
+}
 fwrite(roas_dt, "outputs/models/robyn_roas.csv")
 
 robyn_subfolders <- list.dirs(plot_dir, recursive = FALSE)
@@ -145,15 +198,23 @@ meta <- list(
   selected_model  = best_model,
   n_pareto_models = nrow(pareto_df),
   plot_dir        = actual_plot_dir,
-  nrmse           = round(pareto_df$nrmse[pareto_df$solID == best_model], 4),
-  rssd            = round(pareto_df$decomp.rssd[pareto_df$solID == best_model], 4),
-  rsq_train       = round(pareto_df$rsq_train[pareto_df$solID == best_model], 4),
+  nrmse           = if ("nrmse" %in% names(pareto_df)) round(pareto_df$nrmse[1], 4) else NA_real_,
+  rssd            = if ("decomp.rssd" %in% names(pareto_df)) round(pareto_df$decomp.rssd[1], 4) else NA_real_,
+  rsq_train       = if ("rsq_train" %in% names(pareto_df)) round(pareto_df$rsq_train[1], 4) else NA_real_,
   robyn_version   = as.character(packageVersion("Robyn")),
   iterations      = 200,
   trials          = 1
-)
+ )
+
+if (!is.na(model_id_col) && model_id_col %in% names(pareto_df)) {
+  sel_rows <- pareto_df[as.character(pareto_df[[model_id_col]]) == best_model, , drop = FALSE]
+  if (nrow(sel_rows) > 0) {
+    if ("nrmse" %in% names(sel_rows)) meta$nrmse <- round(sel_rows$nrmse[1], 4)
+    if ("decomp.rssd" %in% names(sel_rows)) meta$rssd <- round(sel_rows$decomp.rssd[1], 4)
+    if ("rsq_train" %in% names(sel_rows)) meta$rsq_train <- round(sel_rows$rsq_train[1], 4)
+  }
+}
+
 write_json(meta, "outputs/models/robyn_meta.json", auto_unbox = TRUE)
-cat("Selected model:", best_model, "
-")
-cat("Metadata saved to outputs/models/robyn_meta.json
-")
+cat("Selected model:", best_model, "\n")
+cat("Metadata saved to outputs/models/robyn_meta.json\n")
